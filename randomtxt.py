@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import random
+import pika
 
 # text generation function
 # Based on these two tutorials:
@@ -32,15 +33,33 @@ def text_generation(links):
 
     return returnText
 
+
 # Setup communication channel
+connection = pika.BlockingConnection(
+    pika.ConnectionParameters(host='localhost'))
 
+channel = connection.channel()
 
-# Receive Request
+channel.queue_declare(queue='text_gen')
 
-
-# Generate the text
+# What to do when we receive a request:
+def on_request(chann, method, props, body):
+    print(" [randomtxt.py] generating text....")
+    # Generate the text
     possibleLinks = ["/wiki/Link_farm", "/wiki/Belgian_National_Day", "/wiki/White-nosed_saki"]
     random.shuffle(possibleLinks)
     message = text_generation(possibleLinks)
+    # And then send it back
+    chann.basic_publish(exchange='',
+                     routing_key=props.reply_to,
+                     properties=pika.BasicProperties(correlation_id = \
+                                                         props.correlation_id),
+                     body=str(message))
+    chann.basic_ack(delivery_tag=method.delivery_tag)
 
-# Send the Response
+# Actually receive requests and send responses
+channel.basic_qos(prefetch_count=1)
+channel.basic_consume(queue='text_gen', on_message_callback=on_request)
+
+print(" [randomtxt.py] Waiting for random text generation requests")
+channel.start_consuming()
