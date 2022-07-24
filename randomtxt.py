@@ -20,12 +20,12 @@ def text_generation(links):
     print(returnText)
 
     pageLinks = soup.find(id="bodyContent").find_all("a")
-	random.shuffle(pageLinks)
+    random.shuffle(pageLinks)
 
     # just for fun add a random wiki page to the possible links for next call
     for link in pageLinks:
         # skip non-wiki links
-        if pageLinks[linkIndex]['href'].find("/wiki/") == -1:
+        if link['href'].find("/wiki/") == -1:
             continue
         # otherwise, add this wiki link to possible links and exit the loop
         links.append(link['href'])
@@ -49,6 +49,7 @@ def on_request(chann, method, props, body):
     possibleLinks = ["/wiki/Link_farm", "/wiki/Belgian_National_Day", "/wiki/White-nosed_saki"]
     random.shuffle(possibleLinks)
     message = text_generation(possibleLinks)
+    print(f" [randomtxt] sending message: {message}")
     # And then send it back
     chann.basic_publish(exchange='',
                      routing_key=props.reply_to,
