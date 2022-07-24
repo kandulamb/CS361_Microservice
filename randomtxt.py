@@ -7,32 +7,17 @@ import pika
 # Based on these two tutorials:
 # 1) https://www.geeksforgeeks.org/web-scraping-from-wikipedia-using-python-a-complete-guide/
 # 2) https://www.freecodecamp.org/news/scraping-wikipedia-articles-with-python/
-def text_generation(links):
+def text_generation(link):
     # open a webpage with http requests
+    print(f"[randomtxt] Pulling text from {link}")
     response = requests.get(
-    	url="https://en.wikipedia.org" + links[0],
+    	url="https://en.wikipedia.org" + link,
     )
     # parse it with beautiful soup so that we can pull a paragraph from it
-    soup = BeautifulSoup(response.content, 'html.parser')
+    wiki_soup = BeautifulSoup(response.content, 'html.parser')
 
     # set our randomly generated text variable with beautiful soup commands
-    returnText = soup.find_all('p')[0].get_text()
-    print(returnText)
-
-    pageLinks = soup.find(id="bodyContent").find_all("a")
-    random.shuffle(pageLinks)
-
-    # just for fun add a random wiki page to the possible links for next call
-    for link in pageLinks:
-        # skip non-wiki links
-        if link['href'].find("/wiki/") == -1:
-            continue
-        # otherwise, add this wiki link to possible links and exit the loop
-        links.append(link['href'])
-        break
-
-    return returnText
-
+    return wiki_soup.find_all('p')[0].get_text()
 
 # Setup communication channel
 connection = pika.BlockingConnection(
@@ -46,9 +31,11 @@ channel.queue_declare(queue='text_gen')
 def on_request(chann, method, props, body):
     print(" [randomtxt.py] generating text....")
     # Generate the text
-    possibleLinks = ["/wiki/Link_farm", "/wiki/Belgian_National_Day", "/wiki/White-nosed_saki"]
+    possibleLinks = ["/wiki/Link_farm", "/wiki/Belgian_National_Day", "/wiki/Biological_specimen",
+        "/wiki/Standard_operating_procedure", "/wiki/Checklist", "/wiki/Software_engineering",
+        "/wiki/Decision-making", "/wiki/Mental_model", "/wiki/User_interface_design"]
     random.shuffle(possibleLinks)
-    message = text_generation(possibleLinks)
+    message = text_generation(possibleLinks[0])
     print(f" [randomtxt] sending message: {message}")
     # And then send it back
     chann.basic_publish(exchange='',
