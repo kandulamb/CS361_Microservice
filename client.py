@@ -24,7 +24,7 @@ class RandomTextRPC():
         if self.corr_id == props.correlation_id:
             self.response = body
 
-    def call(self):
+    def request_text(self):
         self.response = None
         self.corr_id = str(uuid.uuid4())
         self.channel.basic_publish(
@@ -40,5 +40,5 @@ class RandomTextRPC():
 
 example_client = RandomTextRPC()
 print(" [client.py] Requesting text")
-response = example_client.call()
+response = example_client.request_text()
 print(f" [client.py] Got {response}")
